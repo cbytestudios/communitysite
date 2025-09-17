@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -185,10 +185,31 @@ export function WebsiteSettings() {
   const [isLoading, setIsLoading] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
 
+  // Auto-save: debounce writes when settings change
+  const saveTimer = useRef<NodeJS.Timeout | null>(null)
+  const isInitialLoad = useRef(true)
+
   useEffect(() => {
     fetchSettings()
     checkForUpdates()
   }, [])
+
+  useEffect(() => {
+    if (isInitialLoad.current) {
+      // Skip auto-save immediately after initial fetch
+      isInitialLoad.current = false
+      return
+    }
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      // Fire-and-forget save, rely on API validation
+      saveSettings()
+    }, 600)
+    // Cleanup on unmount
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+    }
+  }, [settings])
 
   const fetchSettings = async () => {
     try {
@@ -326,7 +347,7 @@ export function WebsiteSettings() {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 bg-charcoal-light/50 border border-amber-gold/20">
+        <TabsList className="grid w-full grid-cols-7 bg-charcoal-light/50 border border-amber-gold/20">
           <TabsTrigger value="general" className="data-[state=active]:bg-amber-gold data-[state=active]:text-charcoal">
             <Settings className="w-4 h-4 mr-2" />
             General
@@ -351,7 +372,61 @@ export function WebsiteSettings() {
             <RefreshCw className="w-4 h-4 mr-2" />
             Updates
           </TabsTrigger>
+          <TabsTrigger value="features" className="data-[state=active]:bg-amber-gold data-[state=active]:text-charcoal">
+            <Settings className="w-4 h-4 mr-2" />
+            Features
+          </TabsTrigger>
         </TabsList>
+
+        {/* Features tab */}
+        <TabsContent value="features">
+          <Card className="bg-charcoal-light/80 border-amber-gold/20">
+            <CardHeader>
+              <CardTitle className="text-amber-gold flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Feature Flags
+              </CardTitle>
+              <CardDescription className="text-sage-green/80">
+                Toggle built-in modules for your site. Changes auto-save.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-4 rounded-lg border border-amber-gold/20 bg-charcoal/40">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-sage-green">Community Forum</h3>
+                      <p className="text-sage-green/60 text-sm">Enable a forum with categories and permissions.</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      id="feature-forum"
+                      checked={settings.features.communityForum}
+                      onChange={(e) => setSettings({ ...settings, features: { ...settings.features, communityForum: e.target.checked } })}
+                      className="w-4 h-4 text-amber-gold bg-charcoal border-amber-gold/30 rounded focus:ring-amber-gold"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg border border-amber-gold/20 bg-charcoal/40">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-sage-green">Event Calendar</h3>
+                      <p className="text-sage-green/60 text-sm">Enable community events and scheduling.</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      id="feature-events"
+                      checked={settings.features.eventCalendar}
+                      onChange={(e) => setSettings({ ...settings, features: { ...settings.features, eventCalendar: e.target.checked } })}
+                      className="w-4 h-4 text-amber-gold bg-charcoal border-amber-gold/30 rounded focus:ring-amber-gold"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="theme">
           <Card className="bg-charcoal-light/80 border-amber-gold/20">

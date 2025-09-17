@@ -7,6 +7,7 @@ import { ServerManagementEnhanced } from "@/components/admin/server-management-e
 import { ContentModeration } from "@/components/admin/content-moderation"
 import { AnalyticsDashboard } from "@/components/admin/analytics-dashboard"
 import { WebsiteCustomization } from "@/components/admin/website-customization"
+import { ForumManagement } from "@/components/admin/forum-management"
 import { UpdateManagement } from "@/components/admin/update-management"
 import { Users, Server, Shield, BarChart3, Settings, Download, Loader2 } from "lucide-react"
 import { useAuth } from "@/components/session-provider"
@@ -60,7 +61,7 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8 bg-charcoal-light/50 border border-amber-gold/20">
+          <TabsList className="grid w-full grid-cols-9 bg-charcoal-light/50 border border-amber-gold/20">
             <TabsTrigger
               value="analytics"
               className="flex items-center gap-2 data-[state=active]:bg-amber-gold data-[state=active]:text-charcoal"
@@ -97,6 +98,13 @@ export default function AdminDashboard() {
               Settings
             </TabsTrigger>
 
+            <TabsTrigger
+              value="forum"
+              className="flex items-center gap-2 data-[state=active]:bg-amber-gold data-[state=active]:text-charcoal"
+            >
+              <Settings className="h-4 w-4" />
+              Forum
+            </TabsTrigger>
 
             <TabsTrigger
               value="updates"
@@ -125,6 +133,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="settings">
             <WebsiteCustomization />
+          </TabsContent>
+
+          <TabsContent value="forum">
+            <ForumManagement />
           </TabsContent>
 
           <TabsContent value="updates">

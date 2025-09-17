@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Home, Server, Users, BookOpen, HelpCircle, Settings, LogIn, LogOut, User } from "lucide-react"
+import { Menu, X, Home, Server, Users, BookOpen, HelpCircle, Settings, LogIn, LogOut, User, Calendar } from "lucide-react"
 import { useAuth } from "@/components/session-provider"
 
 // Dynamic nav items: base items + optional Community when enabled
@@ -37,8 +37,14 @@ export function Navigation() {
 
   const navItems = (() => {
     const items = [...baseNavItems]
-    if (features?.communityForum || features?.eventCalendar) {
-      items.splice(2, 0, { href: "/community", label: "Community", icon: Users })
+    let insertIndex = 2
+    if (features?.communityForum) {
+      items.splice(insertIndex, 0, { href: "/forum", label: "Forum", icon: Users })
+      insertIndex += 1
+    }
+    if (features?.eventCalendar) {
+      items.splice(insertIndex, 0, { href: "/events", label: "Events", icon: Calendar })
+      insertIndex += 1
     }
     return items
   })()

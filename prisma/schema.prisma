@@ -35,6 +35,9 @@ model WebsiteSettings {
   siteName      String   @default("Community Website")
   siteDescription String @default("A multi-game community platform")
 
+  // Forum Relations
+  forumCategories ForumCategory[]
+
   heroTitle       String  @default("Welcome to Our Gaming Community")
   heroDescription String  @default("Join our multi-game community. Experience epic adventures, connect with players, and forge your legend across multiple gaming platforms.")
   heroBackgroundImage String?
@@ -169,4 +172,40 @@ model GamePlayer {
   money      Int
   job        String
   lastSynced DateTime @default(now())
+}
+
+// --- Forum models ---
+model ForumCategory {
+  id          String   @id @default(cuid())
+  name        String
+  description String  @default("")
+  order       Int     @default(0)
+  settingsId  String
+  settings    WebsiteSettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+  threads     ForumThread[]
+  permissions ForumCategoryPermission[]
+}
+
+model ForumThread {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   @default("")
+  authorId    String?
+  categoryId  String
+  category    ForumCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  isLocked    Boolean  @default(false)
+  isPinned    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ForumCategoryPermission {
+  id          String   @id @default(cuid())
+  categoryId  String
+  category    ForumCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  role        String   // e.g. "guest", "member", "moderator", "admin"
+  canView     Boolean  @default(true)
+  canPost     Boolean  @default(true)
+  canReply    Boolean  @default(true)
+  canModerate Boolean  @default(false)
 }
