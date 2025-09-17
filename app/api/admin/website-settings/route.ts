@@ -94,31 +94,7 @@ export async function PUT(request: NextRequest) {
     // Upsert single settings row
     const existing = await prisma.websiteSettings.findFirst()
 
-    // If galleryImages is provided as an array of strings or objects, reconcile child records
-    if (Array.isArray(updateData.galleryImages)) {
-      const images = updateData.galleryImages
-      delete updateData.galleryImages
-
-      const settingsRow = existing
-        ? await prisma.websiteSettings.update({ where: { id: existing.id }, data: updateData })
-        : await prisma.websiteSettings.create({ data: updateData })
-
-      // Reset and insert images (simple strategy for SQLite)
-      await prisma.galleryImage.deleteMany({ where: { settingsId: settingsRow.id } })
-      if (images.length) {
-        await prisma.galleryImage.createMany({
-          data: images.map((img: any) => ({
-            settingsId: settingsRow.id,
-            url: typeof img === 'string' ? img : img.url,
-            caption: typeof img === 'string' ? '' : (img.caption || ''),
-            alt: typeof img === 'string' ? '' : (img.alt || ''),
-          }))
-        })
-      }
-
-      const settings = await prisma.websiteSettings.findUnique({ where: { id: settingsRow.id }, include: { galleryImages: true } })
-      return NextResponse.json({ message: 'Website settings updated successfully', settings })
-    }
+    // galleryImages handling moved below after payload normalization
 
     // De-normalize admin payload into Prisma fields
     const payload = { ...updateData }
@@ -194,11 +170,11 @@ export async function PUT(request: NextRequest) {
       delete payload.seo
     }
 
-    // Upsert base row
+    // Upsert base row after normalization
 
-    // Handle gallery separately if present
-    let gallery = updateData.galleryImages
-    if (gallery) delete payload.galleryImages
+    // Extract and remove galleryImages to handle separately
+    const gallery = Array.isArray(updateData.galleryImages) ? updateData.galleryImages : null
+    if (payload.galleryImages) delete payload.galleryImages
 
     const settingsRow = existing
       ? await prisma.websiteSettings.update({ where: { id: existing.id }, data: payload })

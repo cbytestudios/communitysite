@@ -8,17 +8,41 @@ import { Button } from "@/components/ui/button"
 import { Menu, X, Home, Server, Users, BookOpen, HelpCircle, Settings, LogIn, LogOut, User } from "lucide-react"
 import { useAuth } from "@/components/session-provider"
 
-const navItems = [
+// Dynamic nav items: base items + optional Community when enabled
+const baseNavItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/servers", label: "Servers", icon: Server },
   { href: "/docs", label: "Documentation", icon: BookOpen },
   { href: "/support", label: "Support", icon: HelpCircle },
-]
+] as const
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
   const { user, logout } = useAuth()
+
+  // Fetch public feature flags to determine if Community should be shown
+  const [features, setFeatures] = useState<{ communityForum?: boolean; eventCalendar?: boolean } | null>(null)
+  useState(() => {
+    // use a micro-task to avoid SSR mismatch, simple fetch on mount
+    ;(async () => {
+      try {
+        const res = await fetch('/api/website-settings', { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          setFeatures(data?.features || null)
+        }
+      } catch {}
+    })()
+  })
+
+  const navItems = (() => {
+    const items = [...baseNavItems]
+    if (features?.communityForum || features?.eventCalendar) {
+      items.splice(2, 0, { href: "/community", label: "Community", icon: Users })
+    }
+    return items
+  })()
 
   return (
     <motion.nav

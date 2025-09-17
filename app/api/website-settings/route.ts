@@ -10,7 +10,7 @@ export async function GET() {
       settings = await prisma.websiteSettings.findFirst({ include: { galleryImages: true } }) as any
     }
 
-    // Normalize response to match ThemeSettingsApplier expectations
+    // Normalize response to match ThemeSettingsApplier expectations and expose public feature flags
     const normalized = {
       ...settings,
       colors: {
@@ -33,6 +33,10 @@ export async function GET() {
         twitch: settings.socialTwitch || "",
         steam: settings.socialSteam || "",
         facebook: settings.socialFacebook || "",
+      },
+      features: {
+        communityForum: !!settings.featureCommunityForum,
+        eventCalendar: !!settings.featureEventCalendar,
       },
       themeMode: settings.themeMode || 'dark',
       galleryImages: (settings.galleryImages || []).map((g: any) => ({ url: g.url, caption: g.caption, alt: g.alt })),
