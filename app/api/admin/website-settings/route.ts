@@ -195,7 +195,6 @@ export async function PUT(request: NextRequest) {
     }
 
     // Upsert base row
-    const existing = await prisma.websiteSettings.findFirst()
 
     // Handle gallery separately if present
     let gallery = updateData.galleryImages
