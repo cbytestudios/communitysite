@@ -1,0 +1,60 @@
+-- RedefineTables
+PRAGMA defer_foreign_keys=ON;
+PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_WebsiteSettings" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "siteName" TEXT NOT NULL DEFAULT 'Community Website',
+    "siteDescription" TEXT NOT NULL DEFAULT 'A multi-game community platform',
+    "heroTitle" TEXT NOT NULL DEFAULT 'Welcome to Our Gaming Community',
+    "heroDescription" TEXT NOT NULL DEFAULT 'Join our multi-game community. Experience epic adventures, connect with players, and forge your legend across multiple gaming platforms.',
+    "heroBackgroundImage" TEXT,
+    "themeMode" TEXT NOT NULL DEFAULT 'dark',
+    "socialDiscord" TEXT DEFAULT '',
+    "socialTwitter" TEXT DEFAULT '',
+    "socialYoutube" TEXT DEFAULT '',
+    "socialTwitch" TEXT DEFAULT '',
+    "socialSteam" TEXT DEFAULT '',
+    "socialFacebook" TEXT DEFAULT '',
+    "contactEmail" TEXT DEFAULT '',
+    "colorPrimary" TEXT NOT NULL DEFAULT '#FFC107',
+    "colorSecondary" TEXT NOT NULL DEFAULT '#4FC3F7',
+    "colorAccent" TEXT NOT NULL DEFAULT '#8BC34A',
+    "colorBackground" TEXT NOT NULL DEFAULT '#1A1A1A',
+    "colorSurface" TEXT NOT NULL DEFAULT '#2D2D2D',
+    "colorText" TEXT NOT NULL DEFAULT '#FFFFFF',
+    "colorFeaturedServerCard" TEXT NOT NULL DEFAULT '#3a3a3c',
+    "assetLogoUrl" TEXT DEFAULT '',
+    "assetFaviconUrl" TEXT DEFAULT '',
+    "integrationDiscordEnabled" BOOLEAN NOT NULL DEFAULT false,
+    "integrationDiscordClientId" TEXT DEFAULT '',
+    "integrationDiscordClientSecret" TEXT DEFAULT '',
+    "integrationDiscordBotToken" TEXT DEFAULT '',
+    "integrationDiscordGuildId" TEXT DEFAULT '',
+    "integrationSteamEnabled" BOOLEAN NOT NULL DEFAULT false,
+    "integrationSteamApiKey" TEXT DEFAULT '',
+    "integrationGoogleEnabled" BOOLEAN NOT NULL DEFAULT false,
+    "integrationGoogleClientId" TEXT DEFAULT '',
+    "integrationGoogleClientSecret" TEXT DEFAULT '',
+    "smtpHost" TEXT DEFAULT '',
+    "smtpPort" INTEGER NOT NULL DEFAULT 587,
+    "smtpUser" TEXT DEFAULT '',
+    "smtpPassword" TEXT DEFAULT '',
+    "fromEmail" TEXT DEFAULT '',
+    "fromName" TEXT DEFAULT '',
+    "featureUserRegistration" BOOLEAN NOT NULL DEFAULT true,
+    "featureEmailVerification" BOOLEAN NOT NULL DEFAULT true,
+    "featureServerListing" BOOLEAN NOT NULL DEFAULT true,
+    "featureCommunityForum" BOOLEAN NOT NULL DEFAULT false,
+    "featureEventCalendar" BOOLEAN NOT NULL DEFAULT false,
+    "seoMetaTitle" TEXT DEFAULT '',
+    "seoMetaDescription" TEXT DEFAULT '',
+    "seoKeywords" TEXT DEFAULT '',
+    "seoOgImage" TEXT DEFAULT '',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+INSERT INTO "new_WebsiteSettings" ("assetFaviconUrl", "assetLogoUrl", "colorAccent", "colorBackground", "colorFeaturedServerCard", "colorPrimary", "colorSecondary", "colorSurface", "colorText", "contactEmail", "createdAt", "featureCommunityForum", "featureEmailVerification", "featureEventCalendar", "featureServerListing", "featureUserRegistration", "fromEmail", "fromName", "heroBackgroundImage", "heroDescription", "heroTitle", "id", "integrationDiscordBotToken", "integrationDiscordClientId", "integrationDiscordClientSecret", "integrationDiscordEnabled", "integrationDiscordGuildId", "integrationGoogleClientId", "integrationGoogleClientSecret", "integrationGoogleEnabled", "integrationSteamApiKey", "integrationSteamEnabled", "seoKeywords", "seoMetaDescription", "seoMetaTitle", "seoOgImage", "siteDescription", "siteName", "smtpHost", "smtpPassword", "smtpPort", "smtpUser", "socialDiscord", "socialFacebook", "socialSteam", "socialTwitch", "socialTwitter", "socialYoutube", "updatedAt") SELECT "assetFaviconUrl", "assetLogoUrl", "colorAccent", "colorBackground", "colorFeaturedServerCard", "colorPrimary", "colorSecondary", "colorSurface", "colorText", "contactEmail", "createdAt", "featureCommunityForum", "featureEmailVerification", "featureEventCalendar", "featureServerListing", "featureUserRegistration", "fromEmail", "fromName", "heroBackgroundImage", "heroDescription", "heroTitle", "id", "integrationDiscordBotToken", "integrationDiscordClientId", "integrationDiscordClientSecret", "integrationDiscordEnabled", "integrationDiscordGuildId", "integrationGoogleClientId", "integrationGoogleClientSecret", "integrationGoogleEnabled", "integrationSteamApiKey", "integrationSteamEnabled", "seoKeywords", "seoMetaDescription", "seoMetaTitle", "seoOgImage", "siteDescription", "siteName", "smtpHost", "smtpPassword", "smtpPort", "smtpUser", "socialDiscord", "socialFacebook", "socialSteam", "socialTwitch", "socialTwitter", "socialYoutube", "updatedAt" FROM "WebsiteSettings";
+DROP TABLE "WebsiteSettings";
+ALTER TABLE "new_WebsiteSettings" RENAME TO "WebsiteSettings";
+PRAGMA foreign_keys=ON;
+PRAGMA defer_foreign_keys=OFF;
