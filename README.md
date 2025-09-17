@@ -99,6 +99,12 @@ Need help? Here's how to get support:
 4. **Join our Discord server** for live chat and support
 
 
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
 **Build amazing gaming communities! 🎮✨**
 
 *Made with ❤️ for the gaming community*

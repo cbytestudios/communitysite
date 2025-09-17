@@ -1,0 +1,172 @@
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      String   @id @default(cuid())
+  username                String   @unique
+  email                   String?  @unique
+  password                String?
+  profilePicture          String?
+  discordId               String?  @unique
+  discordUsername         String?
+  discordAvatar           String?
+  isDiscordConnected      Boolean  @default(false)
+  isEmailVerified         Boolean  @default(false)
+  isAdmin                 Boolean  @default(false)
+  isOwner                 Boolean  @default(false)
+  emailVerificationToken  String?
+  emailVerificationExpires DateTime?
+  passwordResetToken      String?
+  passwordResetExpires    DateTime?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+model WebsiteSettings {
+  id            String   @id @default(cuid())
+  siteName      String   @default("Community Website")
+  siteDescription String @default("A multi-game community platform")
+
+  heroTitle       String  @default("Welcome to Our Gaming Community")
+  heroDescription String  @default("Join our multi-game community. Experience epic adventures, connect with players, and forge your legend across multiple gaming platforms.")
+  heroBackgroundImage String?
+
+  // Gallery
+  galleryImages  GalleryImage[]
+
+  // Theme
+  themeMode String @default("dark") // 'dark' | 'light' | 'system'
+
+  // Social Links
+  socialDiscord  String? @default("")
+  socialTwitter  String? @default("")
+  socialYoutube  String? @default("")
+  socialTwitch   String? @default("")
+  socialSteam    String? @default("")
+  socialFacebook String? @default("")
+
+  // Contact
+  contactEmail String? @default("")
+
+  // Colors
+  colorPrimary   String  @default("#FFC107")
+  colorSecondary String  @default("#4FC3F7")
+  colorAccent    String  @default("#8BC34A")
+  colorBackground String @default("#1A1A1A")
+  colorSurface   String  @default("#2D2D2D")
+  colorText      String  @default("#FFFFFF")
+  colorFeaturedServerCard String @default("#3a3a3c")
+
+  // Assets
+  assetLogoUrl    String? @default("")
+  assetFaviconUrl String? @default("")
+
+  // Integrations - flattened for SQLite simplicity
+  integrationDiscordEnabled Boolean @default(false)
+  integrationDiscordClientId String? @default("")
+  integrationDiscordClientSecret String? @default("")
+  integrationDiscordBotToken String? @default("")
+  integrationDiscordGuildId String? @default("")
+
+  integrationSteamEnabled Boolean @default(false)
+  integrationSteamApiKey  String? @default("")
+
+  integrationGoogleEnabled Boolean @default(false)
+  integrationGoogleClientId String? @default("")
+  integrationGoogleClientSecret String? @default("")
+
+  // Email
+  smtpHost     String? @default("")
+  smtpPort     Int     @default(587)
+  smtpUser     String? @default("")
+  smtpPassword String? @default("")
+  fromEmail    String? @default("")
+  fromName     String? @default("")
+
+  // Features
+  featureUserRegistration  Boolean @default(true)
+  featureEmailVerification Boolean @default(true)
+  featureServerListing     Boolean @default(true)
+  featureCommunityForum    Boolean @default(false)
+  featureEventCalendar     Boolean @default(false)
+
+  // SEO
+  seoMetaTitle       String? @default("")
+  seoMetaDescription String? @default("")
+  seoKeywords        String? @default("")
+  seoOgImage         String? @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GalleryImage {
+  id          String  @id @default(cuid())
+  url         String
+  caption     String? @default("")
+  alt         String? @default("")
+  settingsId  String
+  settings    WebsiteSettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+}
+
+model GameServer {
+  id           String  @id @default(cuid())
+  name         String
+  description  String  @default("")
+  ip           String
+  port         Int     @default(30120)
+  queryPort    Int?
+  gameType     String  @default("other")
+  gameVersion  String  @default("")
+  connectUrl   String  @default("")
+  serverImage  String  @default("")
+  tags         String  @default("") // comma-separated
+  isPublic     Boolean @default(true)
+  isFeatured   Boolean @default(false)
+  isOnline     Boolean @default(false)
+  playerCount  Int     @default(0)
+  maxPlayers   Int     @default(32)
+  ping         Int     @default(0)
+  uptime       Int     @default(0)
+  lastChecked  DateTime @default(now())
+
+  // serverInfo flattened
+  infoMap      String  @default("")
+  infoGameMode String  @default("")
+  infoWebsite  String  @default("")
+  infoDiscord  String  @default("")
+  infoRules    String  @default("") // comma-separated
+  infoMods     String  @default("") // JSON string (name,version,required)
+
+  // stats
+  statTotalConnections Int @default(0)
+  statPeakPlayers      Int @default(0)
+  statAveragePlaytime  Int @default(0)
+  statLastPeakDate     DateTime?
+
+  // adminSettings
+  adminAutoUpdate   Boolean @default(true)
+  adminQueryInterval Int    @default(60)
+  adminAlertsEnabled Boolean @default(true)
+  adminMaintenanceMode Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GamePlayer {
+  id         String   @id @default(cuid())
+  playerId   String   @unique
+  username   String
+  money      Int
+  job        String
+  lastSynced DateTime @default(now())
+}
