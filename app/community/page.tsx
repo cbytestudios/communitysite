@@ -1,4 +1,5 @@
 "use client"
+import { useEffect, useState } from "react"
 import { Footer } from "@/components/footer"
 import { CommunityFeed } from "@/components/community-feed"
 import { Leaderboards } from "@/components/leaderboards"
@@ -7,6 +8,24 @@ import { AchievementShowcase } from "@/components/achievement-showcase"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function CommunityPage() {
+  const [features, setFeatures] = useState<{ communityForum?: boolean; eventCalendar?: boolean } | null>(null)
+
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const res = await fetch('/api/website-settings', { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          setFeatures(data?.features || {})
+        }
+      } catch {
+        setFeatures({})
+      }
+    })()
+  }, [])
+
+  const showEvents = !!features?.eventCalendar
+
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 py-8">
@@ -19,10 +38,10 @@ export default function CommunityPage() {
           </div>
 
           <Tabs defaultValue="feed" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-4">
+            <TabsList className={`grid w-full ${showEvents ? 'grid-cols-4' : 'grid-cols-3'} lg:w-auto ${showEvents ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
               <TabsTrigger value="feed">Community Feed</TabsTrigger>
               <TabsTrigger value="leaderboards">Leaderboards</TabsTrigger>
-              <TabsTrigger value="events">Events</TabsTrigger>
+              {showEvents && <TabsTrigger value="events">Events</TabsTrigger>}
               <TabsTrigger value="achievements">Achievements</TabsTrigger>
             </TabsList>
 
@@ -34,9 +53,11 @@ export default function CommunityPage() {
               <Leaderboards />
             </TabsContent>
 
-            <TabsContent value="events" className="space-y-6">
-              <EventsCalendar />
-            </TabsContent>
+            {showEvents && (
+              <TabsContent value="events" className="space-y-6">
+                <EventsCalendar />
+              </TabsContent>
+            )}
 
             <TabsContent value="achievements" className="space-y-6">
               <AchievementShowcase />

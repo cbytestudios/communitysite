@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -23,8 +23,7 @@ export function Navigation() {
 
   // Fetch public feature flags to determine if Community should be shown
   const [features, setFeatures] = useState<{ communityForum?: boolean; eventCalendar?: boolean } | null>(null)
-  useState(() => {
-    // use a micro-task to avoid SSR mismatch, simple fetch on mount
+  useEffect(() => {
     ;(async () => {
       try {
         const res = await fetch('/api/website-settings', { cache: 'no-store' })
@@ -34,7 +33,7 @@ export function Navigation() {
         }
       } catch {}
     })()
-  })
+  }, [])
 
   const navItems = (() => {
     const items = [...baseNavItems]
