@@ -32,7 +32,7 @@ import {
 import { toast } from "sonner"
 
 interface GameServer {
-  _id: string
+  id: string
   name: string
   description: string
   ip: string
@@ -147,7 +147,7 @@ export function ServerManagementEnhanced() {
     
     try {
       const url = editingServer 
-        ? `/api/admin/servers/${editingServer._id}`
+        ? `/api/admin/servers/${editingServer.id}`
         : "/api/admin/servers"
       
       const method = editingServer ? "PUT" : "POST"
@@ -553,7 +553,7 @@ export function ServerManagementEnhanced() {
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {servers.map((server) => (
             <motion.div
-              key={server._id}
+              key={server.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="group"
@@ -604,11 +604,26 @@ export function ServerManagementEnhanced() {
                   )}
                   
                   <div className="flex flex-wrap gap-1">
-                    {server.tags?.slice(0, 3).map((tag, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
+                    {(() => {
+                      // Normalize tags: support string (comma-separated) or array
+                      const normalizeTags = (tags: unknown): string[] => {
+                        if (Array.isArray(tags)) {
+                          return tags.map((t) => String(t).trim()).filter(Boolean)
+                        }
+                        if (typeof tags === 'string') {
+                          return tags.split(',').map((t) => t.trim()).filter(Boolean)
+                        }
+                        return []
+                      }
+
+                      const tagList = normalizeTags(server.tags)
+
+                      return tagList.slice(0, 3).map((tag: string, index: number) => (
+                        <Badge key={`${server.id}-tag-${index}-${tag}`} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))
+                    })()}
                   </div>
                   
                   <div className="flex items-center justify-between pt-2 border-t border-border">
@@ -616,7 +631,7 @@ export function ServerManagementEnhanced() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => toggleVisibility(server._id, server.isPublic)}
+                        onClick={() => toggleVisibility(server.id, server.isPublic)}
                         className="border-border text-foreground hover:bg-accent"
                       >
                         {server.isPublic ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
@@ -624,7 +639,7 @@ export function ServerManagementEnhanced() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => toggleFeatured(server._id, server.isFeatured)}
+                        onClick={() => toggleFeatured(server.id, server.isFeatured)}
                         className="border-border text-foreground hover:bg-accent"
                       >
                         {server.isFeatured ? <Star className="w-3 h-3 fill-current" /> : <StarOff className="w-3 h-3" />}
@@ -643,7 +658,7 @@ export function ServerManagementEnhanced() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleDelete(server._id)}
+                        onClick={() => handleDelete(server.id)}
                         className="border-red-500/30 text-red-400 hover:bg-red-500/10"
                       >
                         <Trash2 className="w-3 h-3" />

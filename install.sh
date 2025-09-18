@@ -607,7 +607,7 @@ setup_environment_config() {
     # Create .env.local with minimal configuration
     cat > "$APP_DIR/.env.local" << EOF
 # Database Configuration
-MONGODB_URI=$MONGODB_URI
+DATABASE_URL="file:./prisma/dev.db"
 
 # JWT Secret for authentication
 JWT_SECRET=$(openssl rand -base64 32 2>/dev/null || head -c 32 /dev/urandom | base64)

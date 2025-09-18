@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/components/session-provider"
+import { signIn } from 'next-auth/react'
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -70,6 +71,17 @@ export default function ProfilePage() {
         </Card>
       </div>
     )
+  }
+
+  // Map Prisma user to the UI shape we expect without changing the DB schema here.
+  const uiUser = {
+    username: user?.username ?? null,
+    email: user?.email ?? null,
+    profilePicture: user?.profilePicture ?? null,
+    // these discord-related fields may not exist on the Prisma User type; read defensively
+    isDiscordConnected: (user as any)?.isDiscordConnected ?? false,
+    discordAvatar: (user as any)?.discordAvatar ?? null,
+    discordUsername: (user as any)?.discordUsername ?? null,
   }
 
   const handleConnectDiscord = async () => {
@@ -161,10 +173,10 @@ export default function ProfilePage() {
 
   // Get the current profile picture to display
   const getCurrentProfilePicture = () => {
-    if (user?.isDiscordConnected && user?.discordAvatar) {
-      return user.discordAvatar
+    if (uiUser.isDiscordConnected && uiUser.discordAvatar) {
+      return uiUser.discordAvatar
     }
-    return user?.profilePicture
+    return uiUser.profilePicture
   }
 
   return (
@@ -234,7 +246,7 @@ export default function ProfilePage() {
                 </h3>
                 
                 <div className="space-y-4">
-                  {user?.isDiscordConnected && user?.discordAvatar && (
+                  {uiUser.isDiscordConnected && uiUser.discordAvatar && (
                     <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                       <p className="text-sage-green text-sm mb-2">
                         <Check className="inline h-4 w-4 mr-1 text-blue-400" />
@@ -275,7 +287,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   
-                  {(user?.profilePicture || (user?.isDiscordConnected && user?.discordAvatar)) && (
+                  {(uiUser.profilePicture || (uiUser.isDiscordConnected && uiUser.discordAvatar)) && (
                     <Button
                       onClick={handleRemoveProfilePicture}
                       disabled={isUpdatingPicture}
@@ -300,7 +312,7 @@ export default function ProfilePage() {
                     Discord Connection
                   </h3>
                 
-                {user?.isDiscordConnected ? (
+                {uiUser.isDiscordConnected ? (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                       <div className="flex items-center space-x-3">
@@ -308,7 +320,7 @@ export default function ProfilePage() {
                         <div>
                           <p className="text-sage-green font-medium">Discord Connected</p>
                           <p className="text-sage-green/70 text-sm">
-                            Connected as {user.discordUsername}
+                            Connected as {uiUser.discordUsername}
                           </p>
                         </div>
                       </div>

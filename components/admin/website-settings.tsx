@@ -395,6 +395,22 @@ export function WebsiteSettings() {
                 <div className="p-4 rounded-lg border border-amber-gold/20 bg-charcoal/40">
                   <div className="flex items-center justify-between">
                     <div>
+                      <h3 className="text-lg font-semibold text-sage-green">Server Listings</h3>
+                      <p className="text-sage-green/60 text-sm">Enable public server listings and browser.</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      id="feature-server-listing"
+                      checked={settings.features.serverListing}
+                      onChange={(e) => setSettings({ ...settings, features: { ...settings.features, serverListing: e.target.checked } })}
+                      className="w-4 h-4 text-amber-gold bg-charcoal border-amber-gold/30 rounded focus:ring-amber-gold"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg border border-amber-gold/20 bg-charcoal/40">
+                  <div className="flex items-center justify-between">
+                    <div>
                       <h3 className="text-lg font-semibold text-sage-green">Community Forum</h3>
                       <p className="text-sage-green/60 text-sm">Enable a forum with categories and permissions.</p>
                     </div>
@@ -566,13 +582,13 @@ export function WebsiteSettings() {
                     <Input
                       id="primaryColor"
                       type="color"
-                      value={settings.primaryColor}
-                      onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value })}
+                      value={(settings as any).primaryColor}
+                      onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value } as any)}
                       className="w-16 h-10 p-1 bg-charcoal border-amber-gold/30"
                     />
                     <Input
-                      value={settings.primaryColor}
-                      onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value })}
+                      value={(settings as any).primaryColor}
+                      onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value } as any)}
                       className="bg-charcoal border-amber-gold/30 text-sage-green"
                     />
                   </div>
@@ -583,13 +599,13 @@ export function WebsiteSettings() {
                     <Input
                       id="secondaryColor"
                       type="color"
-                      value={settings.secondaryColor}
-                      onChange={(e) => setSettings({ ...settings, secondaryColor: e.target.value })}
+                      value={(settings as any).secondaryColor}
+                      onChange={(e) => setSettings({ ...settings, secondaryColor: e.target.value } as any)}       
                       className="w-16 h-10 p-1 bg-charcoal border-amber-gold/30"
                     />
                     <Input
-                      value={settings.secondaryColor}
-                      onChange={(e) => setSettings({ ...settings, secondaryColor: e.target.value })}
+                      value={(settings as any).secondaryColor}
+                      onChange={(e) => setSettings({ ...settings, secondaryColor: e.target.value } as any)}       
                       className="bg-charcoal border-amber-gold/30 text-sage-green"
                     />
                   </div>
@@ -999,25 +1015,7 @@ export function WebsiteSettings() {
         </TabsContent>
       </Tabs>
 
-      <div className="flex justify-end">
-        <Button
-          onClick={saveSettings}
-          disabled={isLoading}
-          className="bg-amber-gold hover:bg-amber-gold/90 text-charcoal px-8"
-        >
-          {isLoading ? (
-            <>
-              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4 mr-2" />
-              Save Settings
-            </>
-          )}
-        </Button>
-      </div>
+  {/* Save button removed: settings now autosave on change */}
     </div>
   )
 }

@@ -28,9 +28,10 @@ export async function GET(request: NextRequest) {
       remoteCommit: remoteCommit.trim().substring(0, 7),
       latestCommitInfo: commitInfo.trim()
     })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error checking for updates:', error)
-    return NextResponse.json({ error: 'Failed to check for updates' }, { status: 500 })
+    const message = error instanceof Error ? error.message : String(error)
+    return NextResponse.json({ error: 'Failed to check for updates', details: message }, { status: 500 })
   }
 }
 
@@ -57,6 +58,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, message: 'Update completed successfully' })
   } catch (error) {
     console.error('Error updating application:', error)
-    return NextResponse.json({ error: 'Update failed', details: error.message }, { status: 500 })
+    const message = error instanceof Error ? error.message : String(error)
+    return NextResponse.json({ error: 'Update failed', details: message }, { status: 500 })
   }
 }

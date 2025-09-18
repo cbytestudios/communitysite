@@ -39,11 +39,11 @@ export function Navigation() {
     const items = [...baseNavItems]
     let insertIndex = 2
     if (features?.communityForum) {
-      items.splice(insertIndex, 0, { href: "/forum", label: "Forum", icon: Users })
+  items.splice(insertIndex, 0, { href: "/forum", label: "Forum", icon: Users } as any)
       insertIndex += 1
     }
     if (features?.eventCalendar) {
-      items.splice(insertIndex, 0, { href: "/events", label: "Events", icon: Calendar })
+  items.splice(insertIndex, 0, { href: "/events", label: "Events", icon: Calendar } as any)
       insertIndex += 1
     }
     return items

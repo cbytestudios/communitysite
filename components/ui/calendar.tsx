@@ -36,7 +36,7 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       formatters={{
-        formatMonthDropdown: (date) =>
+        formatMonthDropdown: (date: Date) =>
           date.toLocaleString("default", { month: "short" }),
         ...formatters,
       }}
@@ -125,7 +125,8 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Root: ({ className, rootRef, ...props }) => {
+        Root: (args: any) => {
+          const { className, rootRef, ...props } = args
           return (
             <div
               data-slot="calendar"
@@ -135,11 +136,10 @@ function Calendar({
             />
           )
         },
-        Chevron: ({ className, orientation, ...props }) => {
+        Chevron: (args: any) => {
+          const { className, orientation, ...props } = args
           if (orientation === "left") {
-            return (
-              <ChevronLeftIcon className={cn("size-4", className)} {...props} />
-            )
+            return <ChevronLeftIcon className={cn("size-4", className)} {...props} />
           }
 
           if (orientation === "right") {
@@ -156,7 +156,8 @@ function Calendar({
           )
         },
         DayButton: CalendarDayButton,
-        WeekNumber: ({ children, ...props }) => {
+        WeekNumber: (args: any) => {
+          const { children, ...props } = args
           return (
             <td {...props}>
               <div className="flex size-(--cell-size) items-center justify-center text-center">

@@ -4,18 +4,9 @@ import prisma from '@/lib/prisma'
 
 export async function GET() {
   try {
-    let settings = await prisma.siteSettings.findFirst()
+    let settings = await prisma.websiteSettings.findFirst()
     if (!settings) {
-      settings = await prisma.siteSettings.create({
-        data: {
-          siteName: 'Community Website',
-          heroImages: ['/images/hero-1.jpg','/images/hero-2.jpg','/images/hero-3.jpg'],
-          heroTitle: 'Welcome to Our Community',
-          heroSubtitle: 'Join our amazing gaming community',
-          discordInvite: '',
-          socialLinks: { discord: '', twitter: '', youtube: '', twitch: '' } as any,
-        }
-      })
+      settings = await prisma.websiteSettings.create({ data: {} })
     }
     return NextResponse.json(settings)
   } catch (error) {
@@ -29,10 +20,10 @@ export async function PUT(request: NextRequest) {
     await requireAdmin(request)
     const body = await request.json()
 
-    const existing = await prisma.siteSettings.findFirst()
+    const existing = await prisma.websiteSettings.findFirst()
     const settings = existing
-      ? await prisma.siteSettings.update({ where: { id: existing.id }, data: { ...body } })
-      : await prisma.siteSettings.create({ data: { ...body } })
+      ? await prisma.websiteSettings.update({ where: { id: existing.id }, data: { ...body } })
+      : await prisma.websiteSettings.create({ data: { ...body } })
 
     return NextResponse.json({ success: true, settings })
   } catch (error: any) {
