@@ -5,11 +5,11 @@
 #
 # Installation Modes:
 # 1. Local Installation: Run from project directory - uses local files
-# 2. Remote Installation: Download from GitHub - for clean server deployments
+# 2. Remote Installation: Download from your host - for clean server deployments
 #
 # Usage:
 #   Local:  ./install.sh (from project directory)
-#   Remote: bash <(curl -fsSL https://raw.githubusercontent.com/OldTymeGamer/communitysite/main/install.sh)
+#   Remote: bash <(curl -fsSL https://codebyte.studio/sites/install.sh)
 
 set -e
 
@@ -18,7 +18,7 @@ INTERACTIVE=true
 if [ ! -t 0 ]; then
     INTERACTIVE=false
     echo "⚠️  Running in non-interactive mode - using defaults"
-    echo "ℹ️  For interactive setup, use: bash <(curl -fsSL https://raw.githubusercontent.com/OldTymeGamer/communitysite/main/install.sh)"
+    echo "ℹ️  For interactive setup, use: bash <(curl -fsSL https://codebyte.studio/sites/install.sh)"
     echo ""
 fi
 
@@ -337,8 +337,8 @@ collect_all_config() {
         echo "Running in HTTP mode on port: $APP_PORT"
     fi
     
-    # Database Configuration with validation
-    collect_and_validate_database_config
+    # Database Configuration: using SQLite (no external DB required)
+    print_info "Using SQLite database (Prisma) — no DB credentials required."
     
     # All other configurations (Discord, Email, Game Servers) are handled through the admin panel
     echo ""
@@ -370,7 +370,7 @@ display_config_summary() {
     
     echo ""
     print_info "🗄️ Database:"
-    echo "  7. MongoDB URI: $MONGODB_URI"
+    echo "  7. SQLite (DATABASE_URL=file:./prisma/dev.db)"
     
     echo ""
     print_info "📧 Email (SMTP) - Optional:"
@@ -411,7 +411,7 @@ modify_configuration() {
                 ;;
             5) prompt_input "Domain name" "$DOMAIN" "DOMAIN" ;;
             6) prompt_input "Admin email" "$ADMIN_EMAIL" "ADMIN_EMAIL" ;;
-            7) collect_and_validate_database_config ;;
+            7) print_info "Using SQLite; no DB configuration required." ;;
             done|DONE) break ;;
             *) print_error "Invalid choice. Enter 1-7 or 'done'" ;;
         esac
@@ -524,48 +524,49 @@ deploy_application() {
     # Pull from hosted ZIP
     print_info "Downloading latest project ZIP from codebyte.studio..."
     cd /tmp
-curl -L -o /tmp/communitysite.zip https://codebyte.studio/sites/communitysite.zip
+    curl -fL -o /tmp/communitysite.zip https://codebyte.studio/sites/communitysite.zip
 
-print_info "Extracting ZIP file..."
-unzip -q /tmp/communitysite.zip -d /tmp/communitysite_extracted
+    print_info "Extracting ZIP file..."
+    rm -rf /tmp/communitysite_extracted
+    mkdir -p /tmp/communitysite_extracted
+    unzip -oq /tmp/communitysite.zip -d /tmp/communitysite_extracted
 
-rm -f /tmp/communitysite.zip
+    rm -f /tmp/communitysite.zip
 
-# Move extracted files to target
-rm -rf "$APP_DIR"
-if [ -d /tmp/communitysite_extracted/communitysite-main ]; then
-    mv /tmp/communitysite_extracted/communitysite-main "$APP_DIR"
-elif [ -d /tmp/communitysite_extracted/communitysite ]; then
-    mv /tmp/communitysite_extracted/communitysite "$APP_DIR"
-else
-    mkdir -p "$APP_DIR"
-    mv /tmp/communitysite_extracted/* "$APP_DIR"
-fi
+    # Move extracted files to target
+    rm -rf "$APP_DIR"
+    if [ -d /tmp/communitysite_extracted/communitysite-main ]; then
+        mv /tmp/communitysite_extracted/communitysite-main "$APP_DIR"
+    elif [ -d /tmp/communitysite_extracted/communitysite ]; then
+        mv /tmp/communitysite_extracted/communitysite "$APP_DIR"
+    else
+        mkdir -p "$APP_DIR"
+        shopt -s dotglob
+        mv /tmp/communitysite_extracted/* "$APP_DIR" || true
+        shopt -u dotglob
+    fi
 
-rm -rf /tmp/communitysite_extracted
-
+    rm -rf /tmp/communitysite_extracted
 
     chown -R www-data:www-data "$APP_DIR"
 
     # Setup environment configuration before building
     print_info "Setting up environment configuration..."
-    cat > "$APP_DIR/.env.local" << EOF
+    cat > "$APP_DIR/.env" << EOF
 # Database Configuration
-MONGODB_URI=$MONGODB_URI
+DATABASE_URL="file:./prisma/dev.db"
 
 # JWT Secret for authentication
 JWT_SECRET=$(openssl rand -base64 32 2>/dev/null || head -c 32 /dev/urandom | base64)
 
 # Site URL for email links
 SITE_URL=$(if [ "$SETUP_SSL" = true ]; then echo "https://$DOMAIN"; else echo "http://localhost:$APP_PORT"; fi)
-
-# All other settings (Discord, Email, Game Servers) are configured through the admin panel
 EOF
 
     # Set permissions
-    chown www-data:www-data "$APP_DIR/.env.local"
-    chmod 600 "$APP_DIR/.env.local"
-    print_info "Environment configuration created: $APP_DIR/.env.local"
+    chown www-data:www-data "$APP_DIR/.env"
+    chmod 600 "$APP_DIR/.env"
+    print_info "Environment configuration created: $APP_DIR/.env"
 
     # Install dependencies
     print_info "Installing npm dependencies..."
@@ -577,6 +578,14 @@ EOF
         print_warning "npm install had permission issues, trying to fix..."
         chown -R www-data:www-data /var/www
         sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npm install --cache /var/www/.npm'
+    fi
+
+    # Prisma generate and migrate (SQLite)
+    if [ -f "$APP_DIR/prisma/schema.prisma" ]; then
+      print_info "Generating Prisma client..."
+      sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npx prisma generate'
+      print_info "Running Prisma migrations..."
+      sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npx prisma migrate deploy'
     fi
 
     # Build app
@@ -936,120 +945,21 @@ testConnection();
 EOF
     
     # Install mongodb package temporarily for testing
-    print_info "Installing MongoDB client for connection testing..."
-    cd /tmp
-    
-    # Create a minimal package.json for the test
-    cat > package.json << 'EOF'
-{
-  "name": "mongodb-test",
-  "version": "1.0.0",
-  "dependencies": {
-    "mongodb": "^6.0.0"
-  }
-}
-EOF
-    
-    # Install mongodb package quietly
-    if ! npm install --silent --no-progress 2>/dev/null; then
-        print_error "Failed to install MongoDB client for testing"
-        rm -f "$test_script" package.json
-        return 1
-    fi
-    
-    # Test the connection
-    if node "$test_script" "$MONGODB_URI" 2>&1; then
-        print_status "MongoDB connection validated successfully!"
-        rm -f "$test_script" package.json
-        rm -rf node_modules package-lock.json
-        return 0
-    else
-        print_error "MongoDB connection failed!"
-        rm -f "$test_script" package.json
-        rm -rf node_modules package-lock.json
-        return 1
-    fi
+    print_info "Skipping MongoDB client installation — using SQLite."
+    return 0
 }
 
 # Function to collect and validate database configuration
 collect_and_validate_database_config() {
-    while true; do
-        echo ""
-        print_step "Database Configuration"
-        print_info "MongoDB connection string (local or cloud like MongoDB Atlas)"
-        print_info "Examples:"
-        print_info "  Local: mongodb://localhost:27017/community"
-        print_info "  Atlas: mongodb+srv://username:password@cluster.mongodb.net/community"
-        print_info "  With Auth: mongodb://username:password@localhost:27017/community"
-        echo ""
-        
-        prompt_input "MongoDB URI" "mongodb://localhost:27017/community" "MONGODB_URI"
-        
-        # Skip validation in non-interactive mode
-        if [ "$INTERACTIVE" = false ]; then
-            print_info "Skipping database validation in non-interactive mode"
-            break
-        fi
-        
-        # Validate the connection
-        if validate_mongodb_connection; then
-            break
-        else
-            echo ""
-            print_warning "Database connection failed. Please check your MongoDB URI."
-            print_info "Common issues:"
-            print_info "  • Incorrect username/password"
-            print_info "  • Wrong host/port"
-            print_info "  • Database server not running"
-            print_info "  • Network/firewall blocking connection"
-            print_info "  • Missing database name in URI"
-            echo ""
-            
-            if prompt_yes_no "Would you like to try a different MongoDB URI?" "y"; then
-                continue
-            else
-                print_error "Database connection is required for installation."
-                print_info "Please fix your MongoDB configuration and run the installer again."
-                exit 1
-            fi
-        fi
-    done
+    print_info "Database Configuration: using SQLite via Prisma. No action required."
+    MONGODB_URI=""
+    return 0
 }
 
 # Function to perform final database validation after Node.js is installed
 validate_database_connection_final() {
-    print_step "Final database connection validation..."
-    
-    # Skip in non-interactive mode
-    if [ "$INTERACTIVE" = false ]; then
-        print_info "Skipping final database validation in non-interactive mode"
-        return 0
-    fi
-    
-    # Validate the connection now that Node.js is available
-    if validate_mongodb_connection; then
-        print_status "Database connection confirmed!"
-        return 0
-    else
-        print_error "Database connection failed after Node.js installation."
-        print_info "This could indicate a network issue or incorrect MongoDB configuration."
-        
-        if prompt_yes_no "Would you like to update your MongoDB URI and try again?" "y"; then
-            collect_and_validate_database_config
-            # Try validation one more time
-            if validate_mongodb_connection; then
-                print_status "Database connection confirmed!"
-                return 0
-            else
-                print_error "Database connection still failing. Installation cannot continue."
-                exit 1
-            fi
-        else
-            print_error "Database connection is required for the application to work."
-            print_info "Please fix your MongoDB configuration and run the installer again."
-            exit 1
-        fi
-    fi
+    print_info "Skipping final database validation — using SQLite."
+    return 0
 }
 
 # Function to validate DNS before SSL setup
@@ -1200,9 +1110,13 @@ EOF
 start_services() {
     print_step "Starting services..."
     
-    # Start PM2 application
+    # Start PM2 application (fallback to npm start if no ecosystem file)
     cd "$APP_DIR"
-    sudo -u www-data bash -c "export PATH=\"/var/www/.npm-global/bin:\$PATH\" && pm2 start ecosystem.config.js"
+    if [ -f "$APP_DIR/ecosystem.config.js" ]; then
+      sudo -u www-data bash -c "export PATH=\"/var/www/.npm-global/bin:\$PATH\" && pm2 start ecosystem.config.js --name $APP_NAME"
+    else
+      sudo -u www-data bash -c "export PATH=\"/var/www/.npm-global/bin:\$PATH\" && pm2 start npm --name $APP_NAME -- start"
+    fi
     sudo -u www-data bash -c "export PATH=\"/var/www/.npm-global/bin:\$PATH\" && pm2 save"
     
     # Setup PM2 startup script
@@ -1214,7 +1128,7 @@ start_services() {
     cat > "/etc/systemd/system/$APP_NAME.service" << EOF
 [Unit]
 Description=$APP_NAME Community Website
-After=network.target mongodb.service
+After=network.target
 Wants=network.target
 
 [Service]
@@ -1311,16 +1225,16 @@ validate_installation() {
         validation_failed=true
     fi
     
-    # Check if .env.local exists and has required variables
-    if [ ! -f "$APP_DIR/.env.local" ]; then
-        print_error "Environment file $APP_DIR/.env.local does not exist"
+    # Check if .env exists and has required variables
+    if [ ! -f "$APP_DIR/.env" ]; then
+        print_error "Environment file $APP_DIR/.env does not exist"
         validation_failed=true
     else
         # Check for required environment variables
-        local required_vars=("MONGODB_URI" "JWT_SECRET" "SITE_URL")
+        local required_vars=("DATABASE_URL" "JWT_SECRET" "SITE_URL")
         for var in "${required_vars[@]}"; do
-            if ! grep -q "^$var=" "$APP_DIR/.env.local"; then
-                print_error "Required environment variable $var is missing from .env.local"
+            if ! grep -q "^$var=" "$APP_DIR/.env"; then
+                print_error "Required environment variable $var is missing from .env"
                 validation_failed=true
             fi
         done
@@ -1344,10 +1258,9 @@ validate_installation() {
         validation_failed=true
     fi
     
-    # Check if PM2 ecosystem config exists
+    # PM2 ecosystem config is optional (we fallback to npm start)
     if [ ! -f "$APP_DIR/ecosystem.config.js" ]; then
-        print_error "PM2 ecosystem configuration not found"
-        validation_failed=true
+        print_info "PM2 ecosystem.config.js not found — using npm start with PM2."
     fi
     
     # Check if Nginx configuration exists and is valid
@@ -1391,6 +1304,7 @@ display_completion_info() {
         print_info "🌐 Your website is available at:"
         echo "   http://localhost:$APP_PORT"
         echo "   http://$(hostname -I | awk '{print $1}'):$APP_PORT"
+        echo "   (If behind reverse proxy, use SITE_URL in .env)"
     fi
     
     echo ""
