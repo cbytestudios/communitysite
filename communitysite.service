@@ -6,10 +6,12 @@ After=network.target
 Type=simple
 User=www-data
 WorkingDirectory=/var/www/communitysite
-ExecStart=/usr/bin/npm start
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=NODE_ENV=production
+Environment=PORT=3000
+ExecStart=/usr/bin/node ./node_modules/next/dist/bin/next start -p ${PORT}
 Restart=on-failure
 RestartSec=10
-Environment=NODE_ENV=production
 
 [Install]
 WantedBy=multi-user.target

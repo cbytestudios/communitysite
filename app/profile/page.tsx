@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/components/session-provider"
-import { signIn } from 'next-auth/react'
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -87,10 +86,10 @@ export default function ProfilePage() {
   const handleConnectDiscord = async () => {
     setIsConnecting(true)
     try {
-      await signIn('discord', { 
-        callbackUrl: '/profile',
-        redirect: true 
-      })
+      // Redirect to a backend endpoint that will handle Discord OAuth (to be implemented)
+      if (typeof window !== 'undefined') {
+        window.location.href = '/api/discord/connect'
+      }
     } catch (error) {
       console.error('Discord connection error:', error)
     } finally {

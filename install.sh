@@ -590,7 +590,8 @@ EOF
 
     # Build app
     print_info "Building application (dev deps included for build)..."
-    sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npm run build'
+    # Avoid shell shim; call Next via Node to prevent noexec issues
+    sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && node ./node_modules/next/dist/bin/next build'
 
     # Prune dev dependencies for production runtime
     print_info "Pruning devDependencies for production runtime..."
@@ -618,8 +619,6 @@ JWT_SECRET=$(openssl rand -base64 32 2>/dev/null || head -c 32 /dev/urandom | ba
 
 # Site URL for email links
 SITE_URL=$(if [ "$SETUP_SSL" = true ]; then echo "https://$DOMAIN"; else echo "http://localhost:$APP_PORT"; fi)
-
-# All other settings (Discord, Email, Game Servers) are configured through the admin panel
 EOF
     
     # Set proper ownership and permissions
@@ -1119,7 +1118,8 @@ start_services() {
     if [ -f "$APP_DIR/ecosystem.config.js" ]; then
       sudo -u www-data bash -c "export PATH=\"/var/www/.npm-global/bin:\$PATH\" && pm2 start ecosystem.config.js --name $APP_NAME"
     else
-      sudo -u www-data bash -c "export PATH=\"/var/www/.npm-global/bin:\$PATH\" && pm2 start npm --name $APP_NAME -- start"
+      # Avoid npm shim; start Next via Node directly for noexec-safety
+      sudo -u www-data bash -c "export PATH=\"/var/www/.npm-global/bin:\$PATH\" && node ./node_modules/next/dist/bin/next start -p $APP_PORT"
     fi
     sudo -u www-data bash -c "export PATH=\"/var/www/.npm-global/bin:\$PATH\" && pm2 save"
     
@@ -1144,7 +1144,7 @@ Environment=PATH=/var/www/.npm-global/bin:/usr/local/bin:/usr/bin:/bin
 Environment=HOME=/var/www
 Environment=NODE_ENV=production
 Environment=PORT=$APP_PORT
-ExecStart=/usr/bin/npm start
+ExecStart=/usr/bin/node ./node_modules/next/dist/bin/next start -p $APP_PORT
 Restart=on-failure
 RestartSec=10s
 StandardOutput=journal
