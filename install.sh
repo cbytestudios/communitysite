@@ -509,7 +509,7 @@ install_pm2() {
 # Function to deploy application
 deploy_application() {
     print_step "Deploying application files..."
-    
+
     # Stop any existing services
     print_info "Stopping existing services..."
     systemctl stop nginx 2>/dev/null || true
@@ -517,67 +517,34 @@ deploy_application() {
         systemctl stop "$APP_NAME"
     fi
     sudo -u www-data bash -c "export PATH=\"/var/www/.npm-global/bin:\$PATH\" && pm2 stop $APP_NAME" 2>/dev/null || true
-    
+
     # Create app directory
     mkdir -p "$APP_DIR"
-    
-    # Deploy project files
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    
-    # Check if we're running from a local project directory
-    if [ -f "$SCRIPT_DIR/package.json" ] && [ -f "$SCRIPT_DIR/next.config.mjs" ]; then
-        print_info "Installing from local project files..."
-        
-        # Copy files from current directory to app directory
-        if [ "$SCRIPT_DIR" != "$APP_DIR" ]; then
-            print_info "Copying project files to $APP_DIR..."
-            rm -rf "$APP_DIR"
-            cp -r "$SCRIPT_DIR" "$APP_DIR"
-            
-            # Remove .git directory to avoid ownership issues
-            rm -rf "$APP_DIR/.git"
-        else
-            print_info "Already in target directory, skipping file copy..."
-        fi
+
+    # Pull from hosted ZIP
+    print_info "Downloading latest project ZIP from codebyte.studio..."
+    cd /tmp
+    curl -L -o communitysite.zip https://codebyte.studio/sites/communitysite.zip
+
+    print_info "Extracting ZIP file..."
+    unzip -q communitysite.zip
+    rm -rf "$APP_DIR"
+
+    # Handle correct folder name after unzip
+    if [ -d "communitysite-main" ]; then
+        mv communitysite-main "$APP_DIR"
+    elif [ -d "communitysite" ]; then
+        mv communitysite "$APP_DIR"
     else
-        # Fallback: download from GitHub (for remote installation)
-        print_info "Downloading latest project files from GitHub..."
-        if command -v git >/dev/null 2>&1; then
-            # Use git clone if available
-            if [ -d "$APP_DIR/.git" ]; then
-                print_info "Updating existing git repository..."
-                cd "$APP_DIR"
-                # Fix ownership issues before git operations
-                git config --global --add safe.directory "$APP_DIR" 2>/dev/null || true
-                git fetch origin
-                git reset --hard origin/main
-            else
-                print_info "Cloning repository..."
-                rm -rf "$APP_DIR"
-                git clone https://github.com/OldTymeGamer/communitysite.git "$APP_DIR"
-                # Remove .git directory after cloning to avoid future ownership issues
-                rm -rf "$APP_DIR/.git"
-            fi
-        else
-            # Fallback to wget/curl
-            print_info "Downloading project archive..."
-            cd /tmp
-            if command -v wget >/dev/null 2>&1; then
-                wget -O communitysite.zip https://github.com/OldTymeGamer/communitysite/archive/refs/heads/main.zip
-            else
-                curl -L -o communitysite.zip https://github.com/OldTymeGamer/communitysite/archive/refs/heads/main.zip
-            fi
-            
-            # Extract and move files
-            unzip -q communitysite.zip
-            rm -rf "$APP_DIR"
-            mv communitysite-main "$APP_DIR"
-            rm communitysite.zip
-        fi
+        # If no folder, assume flat zip structure
+        mkdir -p "$APP_DIR"
+        mv * "$APP_DIR" 2>/dev/null || true
     fi
-    
+
+    rm communitysite.zip
+
     chown -R www-data:www-data "$APP_DIR"
-    
+
     # Setup environment configuration before building
     print_info "Setting up environment configuration..."
     cat > "$APP_DIR/.env.local" << EOF
@@ -592,31 +559,28 @@ SITE_URL=$(if [ "$SETUP_SSL" = true ]; then echo "https://$DOMAIN"; else echo "h
 
 # All other settings (Discord, Email, Game Servers) are configured through the admin panel
 EOF
-    
-    # Set proper ownership and permissions for .env.local
+
+    # Set permissions
     chown www-data:www-data "$APP_DIR/.env.local"
     chmod 600 "$APP_DIR/.env.local"
     print_info "Environment configuration created: $APP_DIR/.env.local"
-    
+
     # Install dependencies
     print_info "Installing npm dependencies..."
     cd "$APP_DIR"
-    
-    # Ensure proper ownership before npm install
     chown -R www-data:www-data "$APP_DIR"
     chown -R www-data:www-data /var/www/.npm 2>/dev/null || true
-    
+
     if ! sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npm install'; then
         print_warning "npm install had permission issues, trying to fix..."
-        # Fix permissions and try again
         chown -R www-data:www-data /var/www
         sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npm install --cache /var/www/.npm'
     fi
-    
-    # Build application
+
+    # Build app
     print_info "Building application..."
     sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npm run build'
-    
+
     print_status "Application deployed successfully"
 }
 
