@@ -45,11 +45,15 @@ export async function POST(request: NextRequest) {
       isOwner: user.isOwner
     })
 
+    // Decide secure flag based on request protocol (supports HTTP installs behind Nginx)
+    const xfProto = request.headers.get('x-forwarded-proto') || ''
+    const isSecure = xfProto ? xfProto === 'https' : (process.env.SITE_URL?.startsWith('https://') ?? false)
+
     // Set cookie
     const cookieStore = await cookies()
     cookieStore.set('auth-token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isSecure,
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 // 7 days
     })
