@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Menu, X, Home, Server, Users, BookOpen, HelpCircle, Settings, LogIn, LogOut, User, Calendar } from "lucide-react"
 import { useAuth } from "@/components/session-provider"
 
-// Dynamic nav items: base items + optional Community when enabled
+// Dynamic nav items: base items; features determine optional entries
 const baseNavItems = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/servers", label: "Servers", icon: Server },
   { href: "/docs", label: "Documentation", icon: BookOpen },
   { href: "/support", label: "Support", icon: HelpCircle },
 ] as const
@@ -21,8 +20,8 @@ export function Navigation() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
 
-  // Fetch public feature flags to determine if Community should be shown
-  const [features, setFeatures] = useState<{ communityForum?: boolean; eventCalendar?: boolean } | null>(null)
+  // Fetch public feature flags to determine which modules to show
+  const [features, setFeatures] = useState<{ serverListing?: boolean; communityForum?: boolean; eventCalendar?: boolean } | null>(null)
   useEffect(() => {
     ;(async () => {
       try {
@@ -35,15 +34,33 @@ export function Navigation() {
     })()
   }, [])
 
+  // Listen for admin settings saves to update nav immediately without reload
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail as any
+      const f = detail?.features
+      if (f) setFeatures(prev => ({ ...prev, ...f }))
+    }
+    window.addEventListener('website-settings-updated', handler as EventListener)
+    return () => window.removeEventListener('website-settings-updated', handler as EventListener)
+  }, [])
+
   const navItems = (() => {
     const items = [...baseNavItems]
-    let insertIndex = 2
+    let insertIndex = 1 // after Home
+
+    // Server listing visible by default; hide only if explicitly disabled
+    if (features?.serverListing !== false) {
+      items.splice(insertIndex, 0, { href: "/servers", label: "Servers", icon: Server } as any)
+      insertIndex += 1
+    }
+
     if (features?.communityForum) {
-  items.splice(insertIndex, 0, { href: "/forum", label: "Forum", icon: Users } as any)
+      items.splice(insertIndex, 0, { href: "/forum", label: "Forum", icon: Users } as any)
       insertIndex += 1
     }
     if (features?.eventCalendar) {
-  items.splice(insertIndex, 0, { href: "/events", label: "Events", icon: Calendar } as any)
+      items.splice(insertIndex, 0, { href: "/events", label: "Events", icon: Calendar } as any)
       insertIndex += 1
     }
     return items

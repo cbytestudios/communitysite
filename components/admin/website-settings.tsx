@@ -246,6 +246,11 @@ export function WebsiteSettings() {
 
       if (response.ok) {
         toast.success("Settings saved successfully!")
+        // Notify public UI (e.g., Navigation) to refresh feature-based visibility immediately
+        try {
+          const detail = { features: settings.features }
+          window.dispatchEvent(new CustomEvent('website-settings-updated', { detail }))
+        } catch {}
       } else {
         const data = await response.json()
         toast.error(data.error || "Failed to save settings")
