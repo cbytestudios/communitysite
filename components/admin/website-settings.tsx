@@ -637,7 +637,14 @@ export function WebsiteSettings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-semibold text-sage-green">Discord Integration</h3>
-                    <p className="text-sage-green/60 text-sm">Enable Discord login and server integration</p>
+                    <p className="text-sage-green/60 text-sm">Configure Discord OAuth and bot integration</p>
+                    <div className="mt-2 text-xs text-sage-green/70">
+                      <span className="font-semibold text-sage-green">Add Redirect URI:</span>
+                      <div className="mt-1">
+                        <div>Prod: <code className="text-amber-gold">https://YOUR_DOMAIN/api/discord/callback</code></div>
+                        <div>Dev: <code className="text-amber-gold">http://localhost:3000/api/discord/callback</code></div>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <input
@@ -682,11 +689,7 @@ export function WebsiteSettings() {
                         className="bg-charcoal border-amber-gold/30 text-sage-green"
                         placeholder="Your Discord App Client ID"
                       />
-                      <p className="text-xs text-sage-green/70 mt-1">
-                        After enabling Discord, add this Redirect URI in your Discord Developer Portal:
-                        <br />
-                        <code className="text-amber-gold">https://YOUR_DOMAIN/api/discord/callback</code> or <code className="text-amber-gold">http://localhost:3000/api/discord/callback</code>
-                      </p>
+
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="discord-client-secret" className="text-sage-green">Client Secret</Label>
