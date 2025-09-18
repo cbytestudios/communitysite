@@ -24,10 +24,10 @@ function ForumCategoryList() {
   return (
     <div className="divide-y divide-amber-gold/10 rounded-lg border border-amber-gold/20">
       {items.map((c) => (
-        <div key={c.id} className="p-4 hover:bg-charcoal/40 transition">
+        <a key={c.id} href={`/forum/${c.id}`} className="block p-4 hover:bg-charcoal/40 transition">
           <div className="text-sage-green font-medium">{c.name}</div>
           {c.description && <div className="text-sage-green/70 text-sm">{c.description}</div>}
-        </div>
+        </a>
       ))}
     </div>
   )

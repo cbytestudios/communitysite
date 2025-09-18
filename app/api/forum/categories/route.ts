@@ -28,41 +28,71 @@ export async function PUT(req: NextRequest) {
 
     const categories = Array.isArray(body?.categories) ? body.categories : []
 
-    // Wipe and recreate for simplicity; okay for small sets and autosave
+    // Upsert categories and permissions; delete removed ones
     await prisma.$transaction(async (tx) => {
       const existing = await tx.forumCategory.findMany({ where: { settingsId: settings.id }, select: { id: true } })
-      if (existing.length) {
-        await tx.forumCategoryPermission.deleteMany({ where: { categoryId: { in: existing.map(c => c.id) } } })
-        await tx.forumThread.deleteMany({ where: { categoryId: { in: existing.map(c => c.id) } } })
-        await tx.forumCategory.deleteMany({ where: { settingsId: settings.id } })
-      }
+      const existingIds = new Set(existing.map(c => c.id))
+      const incomingIds = new Set<string>()
 
       for (const cat of categories) {
-        const created = await tx.forumCategory.create({
-          data: {
-            settingsId: settings.id,
-            name: cat.name || 'Untitled',
-            description: cat.description || '',
-            sortOrder: typeof cat.sortOrder === 'number' ? cat.sortOrder : (typeof cat.order === 'number' ? cat.order : 0),
-          }
-        })
         const perms = Array.isArray(cat.permissions) ? cat.permissions : []
-        if (perms.length) {
-          await tx.forumCategoryPermission.createMany({
-            data: perms.map((p: any) => ({
-              categoryId: created.id,
-              role: p.role || 'guest',
-              canView: !!p.canView,
-              canPost: !!p.canPost,
-              canReply: !!p.canReply,
-              canModerate: !!p.canModerate,
-            }))
+        if (cat.id && existingIds.has(cat.id)) {
+          incomingIds.add(cat.id)
+          await tx.forumCategory.update({
+            where: { id: cat.id },
+            data: {
+              name: cat.name || 'Untitled',
+              description: cat.description || '',
+              sortOrder: typeof cat.sortOrder === 'number' ? cat.sortOrder : 0,
+            }
           })
+          await tx.forumCategoryPermission.deleteMany({ where: { categoryId: cat.id } })
+          if (perms.length) {
+            await tx.forumCategoryPermission.createMany({
+              data: perms.map((p: any) => ({
+                categoryId: cat.id,
+                role: p.role || 'guest',
+                canView: !!p.canView,
+                canPost: !!p.canPost,
+                canReply: !!p.canReply,
+                canModerate: !!p.canModerate,
+              }))
+            })
+          }
+        } else {
+          const created = await tx.forumCategory.create({
+            data: {
+              settingsId: settings.id,
+              name: cat.name || 'Untitled',
+              description: cat.description || '',
+              sortOrder: typeof cat.sortOrder === 'number' ? cat.sortOrder : 0,
+            }
+          })
+          incomingIds.add(created.id)
+          if (perms.length) {
+            await tx.forumCategoryPermission.createMany({
+              data: perms.map((p: any) => ({
+                categoryId: created.id,
+                role: p.role || 'guest',
+                canView: !!p.canView,
+                canPost: !!p.canPost,
+                canReply: !!p.canReply,
+                canModerate: !!p.canModerate,
+              }))
+            })
+          }
         }
+      }
+
+      // Delete categories that were removed
+      const toDelete = [...existingIds].filter(id => !incomingIds.has(id))
+      if (toDelete.length) {
+        await tx.forumCategoryPermission.deleteMany({ where: { categoryId: { in: toDelete } } })
+        await tx.forumCategory.deleteMany({ where: { id: { in: toDelete } } })
       }
     })
 
-    const refreshed = await prisma.forumCategory.findMany({ where: { settingsId: settings.id }, orderBy: { order: 'asc' }, include: { permissions: true } })
+    const refreshed = await prisma.forumCategory.findMany({ where: { settingsId: settings.id }, orderBy: { sortOrder: 'asc' }, include: { permissions: true } })
     return NextResponse.json({ categories: refreshed })
   } catch (e: any) {
     if (e?.message === 'Authentication required' || e?.message === 'Admin access required') {

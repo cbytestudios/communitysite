@@ -524,24 +524,26 @@ deploy_application() {
     # Pull from hosted ZIP
     print_info "Downloading latest project ZIP from codebyte.studio..."
     cd /tmp
-    curl -L -o communitysite.zip https://codebyte.studio/sites/communitysite.zip
+curl -L -o /tmp/communitysite.zip https://codebyte.studio/sites/communitysite.zip
 
-    print_info "Extracting ZIP file..."
-    unzip -q communitysite.zip
-    rm -rf "$APP_DIR"
+print_info "Extracting ZIP file..."
+unzip -q /tmp/communitysite.zip -d /tmp/communitysite_extracted
 
-    # Handle correct folder name after unzip
-    if [ -d "communitysite-main" ]; then
-        mv communitysite-main "$APP_DIR"
-    elif [ -d "communitysite" ]; then
-        mv communitysite "$APP_DIR"
-    else
-        # If no folder, assume flat zip structure
-        mkdir -p "$APP_DIR"
-        mv * "$APP_DIR" 2>/dev/null || true
-    fi
+rm -f /tmp/communitysite.zip
 
-    rm communitysite.zip
+# Move extracted files to target
+rm -rf "$APP_DIR"
+if [ -d /tmp/communitysite_extracted/communitysite-main ]; then
+    mv /tmp/communitysite_extracted/communitysite-main "$APP_DIR"
+elif [ -d /tmp/communitysite_extracted/communitysite ]; then
+    mv /tmp/communitysite_extracted/communitysite "$APP_DIR"
+else
+    mkdir -p "$APP_DIR"
+    mv /tmp/communitysite_extracted/* "$APP_DIR"
+fi
+
+rm -rf /tmp/communitysite_extracted
+
 
     chown -R www-data:www-data "$APP_DIR"
 
