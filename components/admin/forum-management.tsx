@@ -92,23 +92,25 @@ export function ForumManagement() {
             .sort((a,b) => a.sortOrder - b.sortOrder)
             .map((cat, idx) => (
               <AccordionItem key={idx} value={`cat-${idx}`} className="bg-charcoal/30">
-                <AccordionTrigger className="px-4">
-                  <div className="flex flex-1 items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <GripVertical className="w-4 h-4 text-sage-green/70" />
-                      <span className="text-sage-green font-medium">{cat.name || 'Untitled Category'}</span>
-                      <span className="text-xs text-sage-green/60">(Order {cat.sortOrder})</span>
+                <div className="flex items-center justify-between px-4 py-2">
+                  <AccordionTrigger className="px-0 py-0">
+                    <div className="flex flex-1 items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <GripVertical className="w-4 h-4 text-sage-green/70" />
+                        <span className="text-sage-green font-medium">{cat.name || 'Untitled Category'}</span>
+                        <span className="text-xs text-sage-green/60">(Order {cat.sortOrder})</span>
+                      </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      onClick={(e) => { e.preventDefault(); setCategories(cs => cs.filter((_, i) => i !== idx)) }}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Remove
-                    </Button>
-                  </div>
-                </AccordionTrigger>
+                  </AccordionTrigger>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setCategories(cs => cs.filter((_, i) => i !== idx))}
+                    className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Remove
+                  </Button>
+                </div>
                 <AccordionContent className="px-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
