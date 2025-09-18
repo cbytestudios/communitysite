@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import prisma from '@/lib/prisma'
+import { getAuthUser } from '@/lib/auth'
 
-// Handles Discord OAuth callback: exchanges code for tokens and fetches user profile
+// Handles Discord OAuth callback: exchanges code for tokens, fetches profile, persists to user
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code')
   // Load from WebsiteSettings (admin-managed)
@@ -54,10 +56,29 @@ export async function GET(request: NextRequest) {
     }
 
     const discordUser = await userRes.json()
+    const discordId = String(discordUser.id)
+    const discordUsername = `${discordUser.username}${discordUser.discriminator && discordUser.discriminator !== '0' ? '#' + discordUser.discriminator : ''}`
+    const discordAvatar = discordUser.avatar
+      ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
+      : null
 
-    // TODO: persist discordUser info on your User record (e.g., avatar/username) and mark isDiscordConnected
-    // Example shape:
-    // const { id, username, avatar } = discordUser
+    // Identify current app user (via auth cookie)
+    const authUser = await getAuthUser(request)
+    if (!authUser) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
+    // Persist to the current user record
+    await prisma.user.update({
+      where: { id: authUser.id },
+      data: {
+        discordId,
+        discordUsername,
+        discordAvatar,
+        isDiscordConnected: true,
+        updatedAt: new Date(),
+      },
+    })
 
     // Redirect back to profile page after linking
     return NextResponse.redirect(new URL('/profile', request.url))

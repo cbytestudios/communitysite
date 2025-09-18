@@ -682,6 +682,11 @@ export function WebsiteSettings() {
                         className="bg-charcoal border-amber-gold/30 text-sage-green"
                         placeholder="Your Discord App Client ID"
                       />
+                      <p className="text-xs text-sage-green/70 mt-1">
+                        After enabling Discord, add this Redirect URI in your Discord Developer Portal:
+                        <br />
+                        <code className="text-amber-gold">https://YOUR_DOMAIN/api/discord/callback</code> or <code className="text-amber-gold">http://localhost:3000/api/discord/callback</code>
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="discord-client-secret" className="text-sage-green">Client Secret</Label>
