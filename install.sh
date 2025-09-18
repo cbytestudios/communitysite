@@ -574,23 +574,27 @@ EOF
     chown -R www-data:www-data "$APP_DIR"
     chown -R www-data:www-data /var/www/.npm 2>/dev/null || true
 
-    if ! sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npm install'; then
+    if ! sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npm install --include=dev'; then
         print_warning "npm install had permission issues, trying to fix..."
         chown -R www-data:www-data /var/www
-        sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npm install --cache /var/www/.npm'
+        sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npm install --include=dev --cache /var/www/.npm'
     fi
 
     # Prisma generate and migrate (SQLite)
     if [ -f "$APP_DIR/prisma/schema.prisma" ]; then
       print_info "Generating Prisma client..."
-      sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npx prisma generate'
+      sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && node ./node_modules/prisma/build/index.js generate'
       print_info "Running Prisma migrations..."
-      sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npx prisma migrate deploy'
+      sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && node ./node_modules/prisma/build/index.js migrate deploy'
     fi
 
     # Build app
-    print_info "Building application..."
+    print_info "Building application (dev deps included for build)..."
     sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npm run build'
+
+    # Prune dev dependencies for production runtime
+    print_info "Pruning devDependencies for production runtime..."
+    sudo -u www-data bash -c 'export HOME=/var/www && export PATH="/var/www/.npm-global/bin:$PATH" && npm prune --omit=dev'
 
     print_status "Application deployed successfully"
 }

@@ -3,20 +3,26 @@
 import { Footer } from "@/components/footer"
 import { EventsCalendar } from "@/components/events-calendar"
 import { useEffect, useState } from "react"
+import { notFound } from "next/navigation"
 
 export default function EventsPage() {
-  const [enabled, setEnabled] = useState(false)
+  const [enabled, setEnabled] = useState<boolean | null>(null)
   useEffect(() => {
+    let aborted = false
     ;(async () => {
       try {
         const res = await fetch('/api/website-settings', { cache: 'no-store' })
         const data = res.ok ? await res.json() : {}
-        setEnabled(!!data?.features?.eventCalendar)
+        if (!aborted) setEnabled(!!data?.features?.eventCalendar)
       } catch {
-        setEnabled(false)
+        if (!aborted) setEnabled(false)
       }
     })()
+    return () => { aborted = true }
   }, [])
+
+  if (enabled === null) return null
+  if (!enabled) notFound()
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -27,13 +33,7 @@ export default function EventsPage() {
             <p className="text-muted-foreground">Community calendar and upcoming activities.</p>
           </div>
 
-          {!enabled ? (
-            <div className="p-6 rounded-lg border border-amber-gold/20 bg-charcoal/40 text-sage-green">
-              Events are disabled. Enable them in Admin → Settings → Features.
-            </div>
-          ) : (
-            <EventsCalendar />
-          )}
+          <EventsCalendar />
         </div>
       </main>
       <Footer />
