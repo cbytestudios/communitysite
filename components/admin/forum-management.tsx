@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 
 interface Permission { role: string; canView: boolean; canPost: boolean; canReply: boolean; canModerate: boolean }
-interface Category { id?: string; name: string; description?: string; order: number; permissions: Permission[] }
+interface Category { id?: string; name: string; description?: string; sortOrder: number; permissions: Permission[] }
 
 const DEFAULT_ROLES = ["guest","member","moderator","admin"]
 
@@ -27,7 +27,7 @@ export function ForumManagement() {
             id: c.id,
             name: c.name,
             description: c.description || '',
-            order: typeof c.order === 'number' ? c.order : idx,
+            sortOrder: typeof c.sortOrder === 'number' ? c.sortOrder : (typeof c.order === 'number' ? c.order : idx),
             permissions: (c.permissions || []).length
               ? c.permissions
               : DEFAULT_ROLES.map(r => ({ role: r, canView: true, canPost: r !== 'guest', canReply: r !== 'guest', canModerate: r === 'moderator' || r === 'admin' }))
@@ -49,13 +49,13 @@ export function ForumManagement() {
   }, [categories, loaded])
 
   const addCategory = () => {
-    const nextOrder = categories.length ? Math.max(...categories.map(c => c.order)) + 1 : 0
+    const nextOrder = categories.length ? Math.max(...categories.map(c => c.sortOrder)) + 1 : 0
     setCategories([
       ...categories,
       {
         name: "New Category",
         description: "",
-        order: nextOrder,
+        sortOrder: nextOrder,
         permissions: DEFAULT_ROLES.map(r => ({ role: r, canView: true, canPost: r !== 'guest', canReply: r !== 'guest', canModerate: r === 'moderator' || r === 'admin' }))
       }
     ])

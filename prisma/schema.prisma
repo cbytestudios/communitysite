@@ -179,7 +179,7 @@ model ForumCategory {
   id          String   @id @default(cuid())
   name        String
   description String  @default("")
-  order       Int     @default(0)
+  sortOrder   Int     @default(0)
   settingsId  String
   settings    WebsiteSettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
   threads     ForumThread[]

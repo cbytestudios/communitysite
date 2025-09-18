@@ -5,11 +5,11 @@ import { requireAdmin } from '@/lib/auth'
 // GET: list categories with permissions
 export async function GET() {
   try {
-    const settings = await prisma.websiteSettings.findFirst()
-    if (!settings) return NextResponse.json({ categories: [] })
+    let settings = await prisma.websiteSettings.findFirst()
+    if (!settings) settings = await prisma.websiteSettings.create({ data: {} })
     const categories = await prisma.forumCategory.findMany({
       where: { settingsId: settings.id },
-      orderBy: { order: 'asc' },
+      orderBy: { sortOrder: 'asc' },
       include: { permissions: true },
     })
     return NextResponse.json({ categories })
@@ -23,8 +23,8 @@ export async function PUT(req: NextRequest) {
   try {
     await requireAdmin(req)
     const body = await req.json()
-    const settings = await prisma.websiteSettings.findFirst()
-    if (!settings) return NextResponse.json({ error: 'Settings not initialized' }, { status: 400 })
+    let settings = await prisma.websiteSettings.findFirst()
+    if (!settings) settings = await prisma.websiteSettings.create({ data: {} })
 
     const categories = Array.isArray(body?.categories) ? body.categories : []
 
@@ -43,7 +43,7 @@ export async function PUT(req: NextRequest) {
             settingsId: settings.id,
             name: cat.name || 'Untitled',
             description: cat.description || '',
-            order: typeof cat.order === 'number' ? cat.order : 0,
+            sortOrder: typeof cat.sortOrder === 'number' ? cat.sortOrder : (typeof cat.order === 'number' ? cat.order : 0),
           }
         })
         const perms = Array.isArray(cat.permissions) ? cat.permissions : []
