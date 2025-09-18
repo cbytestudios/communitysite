@@ -649,8 +649,8 @@ configure_nginx() {
         
         cat > "$NGINX_CONF" << EOF
 server {
-    listen 80;
-    server_name $SERVER_NAMES;
+    listen 80 default_server;
+    server_name _;
     
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -694,8 +694,8 @@ EOF
         # HTTP only configuration
         cat > "$NGINX_CONF" << EOF
 server {
-    listen 80;
-    server_name localhost;
+    listen 80 default_server;
+    server_name _;
     
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -748,6 +748,9 @@ EOF
         print_error "Nginx configuration is invalid"
         exit 1
     fi
+    
+    # Reload Nginx to apply changes now
+    systemctl reload nginx || systemctl restart nginx
 }
 
 # Function to setup PM2 configuration
@@ -1306,7 +1309,7 @@ display_completion_info() {
         echo "   https://www.$DOMAIN"
     else
         print_info "🌐 Your website is available at:"
-        echo "   http://localhost:$APP_PORT"
+        echo "   http://localhost/  (via Nginx)"
         echo "   http://$(hostname -I | awk '{print $1}'):$APP_PORT"
         echo "   (If behind reverse proxy, use SITE_URL in .env)"
     fi
@@ -1344,8 +1347,10 @@ display_completion_info() {
     else
         # Get server IP address
         SERVER_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null || hostname -I | awk '{print $1}')
-        print_status "🌐 Visit your website at: http://$SERVER_IP:$APP_PORT"
-        echo "   (or http://localhost:$APP_PORT if accessing locally)"
+        print_status "🌐 Visit your website at: http://$SERVER_IP/"
+        echo "   (or http://localhost/ if accessing locally)"
+        print_status "👤 Create your admin account at: http://$SERVER_IP/setup"
+        echo "   (or http://localhost/setup if accessing locally)"
     fi
     echo ""
     echo "1. Complete initial setup to create your admin account"
