@@ -27,13 +27,13 @@ A comprehensive, customizable community website platform supporting multiple gam
 **Run this single command on your Linux server:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/OldTymeGamer/communitysite/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/cbytestudios/communitysite/main/install.sh | sudo bash
 ```
 
 **If you experience input issues, use this alternative:**
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/OldTymeGamer/communitysite/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/cbytestudios/communitysite/main/install.sh)
 ```
 
 That's it! The script will:
@@ -49,7 +49,7 @@ That's it! The script will:
 1. **Visit your website** - The installer will show you the exact URL/IP address
 2. **Automatic setup** - You'll be redirected to setup automatically on first visit
 3. **Create admin account** - Fill out the setup form to become the site owner
-4. **Use "Admin" button** - Access admin panel via the navigation button (not `/admin` URL)
+4. **Use "Admin" button** - Access admin panel via the navigation button.
 5. **Start building your community!**
 
 ## 🎨 Customization
